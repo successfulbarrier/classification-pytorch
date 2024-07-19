@@ -1,6 +1,6 @@
 from torch import nn
-from torchvision.models.utils import load_state_dict_from_url
-
+# from torchvision.models.utils import load_state_dict_from_url
+from torchvision.models import mobilenet_v2
 
 __all__ = ['MobileNetV2', 'mobilenetv2']
 
@@ -134,12 +134,10 @@ class MobileNetV2(nn.Module):
 
 
 def mobilenetv2(pretrained=False, progress=True, num_classes=1000):
-    model = MobileNetV2()
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['mobilenetv2'], model_dir='./model_data',
-                                            progress=progress)
-        model.load_state_dict(state_dict)
-
+        model = mobilenet_v2(pretrained=pretrained, progress=progress)
+    else:
+        model = mobilenet_v2(pretrained=False, progress=progress)
     if num_classes!=1000:
         model.classifier = nn.Sequential(
                 nn.Dropout(0.2),

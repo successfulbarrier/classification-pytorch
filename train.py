@@ -10,6 +10,8 @@ import torch.distributed as dist
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+import torchvision
+import torchvision.transforms as transforms
 
 from nets import get_model_from_name
 from utils.callbacks import LossHistory
@@ -19,6 +21,10 @@ from utils.utils import (download_weights, get_classes, get_lr_scheduler,
 from utils.utils_fit import fit_one_epoch
 
 if __name__ == "__main__":
+    #----------------------------------------------------#
+    #   是否使用CIFAR数据集训练
+    #----------------------------------------------------#
+    CIFAR = "CIFAR100"
     #----------------------------------------------------#
     #   是否使用Cuda
     #   没有GPU可以设置成False
@@ -49,7 +55,7 @@ if __name__ == "__main__":
     #   训练自己的数据集的时候一定要注意修改classes_path
     #   修改成自己对应的种类的txt
     #----------------------------------------------------#
-    classes_path    = 'model_data/cls_classes.txt' 
+    classes_path    = 'model_data/flowers.txt' 
     #----------------------------------------------------#
     #   输入的图片大小
     #----------------------------------------------------#
@@ -84,7 +90,7 @@ if __name__ == "__main__":
     #   如果想要让模型从主干的预训练权值开始训练，则设置model_path = ''，pretrain = True，此时仅加载主干。
     #   如果想要让模型从0开始训练，则设置model_path = ''，pretrain = Fasle，此时从0开始训练。
     #----------------------------------------------------------------------------------------------------------------------------#
-    model_path      = ""
+    model_path      = "model_data/mobilenet_v2-b0353104.pth"
         
     #----------------------------------------------------------------------------------------------------------------------------#
     #   训练分为两个阶段，分别是冻结阶段和解冻阶段。设置冻结阶段是为了满足机器性能不足的同学的训练需求。
@@ -124,8 +130,8 @@ if __name__ == "__main__":
     #                       (当Freeze_Train=False时失效)
     #------------------------------------------------------------------#
     Init_Epoch          = 0
-    Freeze_Epoch        = 50
-    Freeze_batch_size   = 32
+    Freeze_Epoch        = 10
+    Freeze_batch_size   = 16
     #------------------------------------------------------------------#
     #   解冻阶段训练参数
     #   此时模型的主干不被冻结了，特征提取网络会发生改变
@@ -133,13 +139,13 @@ if __name__ == "__main__":
     #   UnFreeze_Epoch          模型总共训练的epoch
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     #------------------------------------------------------------------#
-    UnFreeze_Epoch      = 200
-    Unfreeze_batch_size = 32
+    UnFreeze_Epoch      = 50
+    Unfreeze_batch_size = 16
     #------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
     #                   默认先冻结主干训练后解冻训练。
     #------------------------------------------------------------------#
-    Freeze_Train        = True
+    Freeze_Train        = False
     
     #------------------------------------------------------------------#
     #   其它训练参数：学习率、优化器、学习率下降有关
@@ -220,13 +226,36 @@ if __name__ == "__main__":
     #------------------------------------------------------#
     #   获取classes
     #------------------------------------------------------#
-    class_names, num_classes = get_classes(classes_path)
+    if CIFAR == "CIFAR10":
+        class_names = [
+            'airplane', 'automobile', 'bird', 'cat', 'deer',
+            'dog', 'frog', 'horse', 'ship', 'truck']
+        num_classes = 10
+    elif CIFAR == "CIFAR100":
+        class_names = [
+            'apple', 'aquarium_fish', 'baby', 'bear', 'beaver', 'bed', 'bee', 'beetle', 'bicycle', 'bottle',
+            'bowl', 'boy', 'bridge', 'bus', 'butterfly', 'camel', 'can', 'castle', 'caterpillar', 'cattle',
+            'chair', 'chimpanzee', 'clock', 'cloud', 'cockroach', 'couch', 'crab', 'crocodile', 'cup', 'dinosaur',
+            'dolphin', 'elephant', 'flatfish', 'forest', 'fox', 'girl', 'hamster', 'house', 'kangaroo', 'keyboard',
+            'lamp', 'lawn_mower', 'leopard', 'lion', 'lizard', 'lobster', 'man', 'maple_tree', 'motorcycle', 'mountain',
+            'mouse', 'mushroom', 'oak_tree', 'orange', 'orchid', 'otter', 'palm_tree', 'pear', 'pickup_truck', 'pine_tree',
+            'plain', 'plate', 'poppy', 'porcupine', 'possum', 'rabbit', 'raccoon', 'ray', 'road', 'rocket',
+            'rose', 'sea', 'seal', 'shark', 'shrew', 'skunk', 'skyscraper', 'snail', 'snake', 'spider',
+            'squirrel', 'streetcar', 'sunflower', 'sweet_pepper', 'table', 'tank', 'telephone', 'television', 'tiger', 'tractor',
+            'train', 'trout', 'tulip', 'turtle', 'wardrobe', 'whale', 'willow_tree', 'wolf', 'woman', 'worm'
+        ]
+        num_classes = 100
+    else:
+        class_names, num_classes = get_classes(classes_path)
 
     if backbone not in ['vit_b_16', 'swin_transformer_tiny', 'swin_transformer_small', 'swin_transformer_base']:
-        model = get_model_from_name[backbone](num_classes = num_classes, pretrained = pretrained)
+        if backbone == "mobilenetv2":
+            model = get_model_from_name[backbone](num_classes = num_classes)
+        else:
+            model = get_model_from_name[backbone](num_classes = num_classes, pretrained = pretrained)
     else:
         model = get_model_from_name[backbone](input_shape = input_shape, num_classes = num_classes, pretrained = pretrained)
-
+    
     if not pretrained:
         weights_init(model)
     if model_path != "":
@@ -387,20 +416,50 @@ if __name__ == "__main__":
         train_dataset   = DataGenerator(train_lines, input_shape, True)
         val_dataset     = DataGenerator(val_lines, input_shape, False)
         
-        if distributed:
-            train_sampler   = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True,)
-            val_sampler     = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False,)
-            batch_size      = batch_size // ngpus_per_node
-            shuffle         = False
+        if CIFAR == "CIFAR10":
+            # 数据预处理
+            transform = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop(32, padding=4),
+                transforms.ToTensor(),
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            ])
+
+            # 加载 CIFAR-10 数据集
+            trainset = torchvision.datasets.CIFAR10(root='/media/lht/LHT/code/datasets', train=True, download=False, transform=transform)
+            gen = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
+            testset = torchvision.datasets.CIFAR10(root='/media/lht/LHT/code/datasets', train=False, download=False, transform=transform)
+            gen_val = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
+        elif CIFAR == "CIFAR100":
+            # 数据预处理
+            transform = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop(32, padding=4),
+                transforms.ToTensor(),
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            ])
+
+            # 加载 CIFAR-100 数据集
+            trainset = torchvision.datasets.CIFAR100(root='/media/lht/LHT/code/datasets', train=True, download=True, transform=transform)
+            gen = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
+            testset = torchvision.datasets.CIFAR100(root='/media/lht/LHT/code/datasets', train=False, download=True, transform=transform)
+            gen_val = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
         else:
-            train_sampler   = None
-            val_sampler     = None
-            shuffle         = True
+            if distributed:
+                train_sampler   = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True,)
+                val_sampler     = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False,)
+                batch_size      = batch_size // ngpus_per_node
+                shuffle         = False
+            else:
+                train_sampler   = None
+                val_sampler     = None
+                shuffle         = True
+                
+            gen             = DataLoader(train_dataset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers, pin_memory=True, 
+                                    drop_last=True, collate_fn=detection_collate, sampler=train_sampler)
+            gen_val         = DataLoader(val_dataset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
+                                    drop_last=True, collate_fn=detection_collate, sampler=val_sampler)
             
-        gen             = DataLoader(train_dataset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers, pin_memory=True, 
-                                drop_last=True, collate_fn=detection_collate, sampler=train_sampler)
-        gen_val         = DataLoader(val_dataset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
-                                drop_last=True, collate_fn=detection_collate, sampler=val_sampler)
         #---------------------------------------#
         #   开始模型训练
         #---------------------------------------#

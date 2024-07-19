@@ -19,8 +19,8 @@ class Classification(object):
         #   model_path指向logs文件夹下的权值文件，classes_path指向model_data下的txt
         #   如果出现shape不匹配，同时要注意训练时的model_path和classes_path参数的修改
         #--------------------------------------------------------------------------#
-        "model_path"        : 'model_data/mobilenet_catvsdog.pth',
-        "classes_path"      : 'model_data/cls_classes.txt',
+        "model_path"        : 'logs/loss_2024_07_19_16_49_06/best_epoch_weights.pth',
+        "classes_path"      : 'model_data/flowers.txt',
         #--------------------------------------------------------------------#
         #   输入的图片大小
         #--------------------------------------------------------------------#
@@ -64,7 +64,29 @@ class Classification(object):
         #---------------------------------------------------#
         #   获得种类
         #---------------------------------------------------#
-        self.class_names, self.num_classes = get_classes(self.classes_path)
+        CIFAR = None
+        if CIFAR == "CIFAR10":
+            self.class_names = [
+                'airplane', 'automobile', 'bird', 'cat', 'deer',
+                'dog', 'frog', 'horse', 'ship', 'truck']
+            self.num_classes = 10
+        elif CIFAR == "CIFAR100":
+            self.class_names = [
+                'apple', 'aquarium_fish', 'baby', 'bear', 'beaver', 'bed', 'bee', 'beetle', 'bicycle', 'bottle',
+                'bowl', 'boy', 'bridge', 'bus', 'butterfly', 'camel', 'can', 'castle', 'caterpillar', 'cattle',
+                'chair', 'chimpanzee', 'clock', 'cloud', 'cockroach', 'couch', 'crab', 'crocodile', 'cup', 'dinosaur',
+                'dolphin', 'elephant', 'flatfish', 'forest', 'fox', 'girl', 'hamster', 'house', 'kangaroo', 'keyboard',
+                'lamp', 'lawn_mower', 'leopard', 'lion', 'lizard', 'lobster', 'man', 'maple_tree', 'motorcycle', 'mountain',
+                'mouse', 'mushroom', 'oak_tree', 'orange', 'orchid', 'otter', 'palm_tree', 'pear', 'pickup_truck', 'pine_tree',
+                'plain', 'plate', 'poppy', 'porcupine', 'possum', 'rabbit', 'raccoon', 'ray', 'road', 'rocket',
+                'rose', 'sea', 'seal', 'shark', 'shrew', 'skunk', 'skyscraper', 'snail', 'snake', 'spider',
+                'squirrel', 'streetcar', 'sunflower', 'sweet_pepper', 'table', 'tank', 'telephone', 'television', 'tiger', 'tractor',
+                'train', 'trout', 'tulip', 'turtle', 'wardrobe', 'whale', 'willow_tree', 'wolf', 'woman', 'worm'
+            ]
+            self.num_classes = 100
+        else:
+            self.class_names, self.num_classes = get_classes(self.classes_path)
+        
         self.generate()
         
         show_config(**self._defaults)
@@ -77,7 +99,10 @@ class Classification(object):
         #   载入模型与权值
         #---------------------------------------------------#
         if self.backbone not in ['vit_b_16', 'swin_transformer_tiny', 'swin_transformer_small', 'swin_transformer_base']:
-            self.model  = get_model_from_name[self.backbone](num_classes = self.num_classes, pretrained = False)
+            if self.backbone == "mobilenetv2":
+                self.model = get_model_from_name[self.backbone](num_classes = self.num_classes)
+            else:
+                self.model = get_model_from_name[self.backbone](num_classes = self.num_classes, pretrained = False)
         else:
             self.model  = get_model_from_name[self.backbone](input_shape = self.input_shape, num_classes = self.num_classes, pretrained = False)
         device      = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

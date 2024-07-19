@@ -36,6 +36,35 @@ def evaluteTop1_5(classfication, lines, metrics_out_path):
     show_results(metrics_out_path, hist, Recall, Precision, classfication.class_names)
     return correct_1 / total, correct_5 / total, Recall, Precision
 
+def CIFAR_evaluteTop1_5(classfication, testloader, metrics_out_path):
+    correct_1 = 0
+    correct_5 = 0
+    preds   = []
+    labels  = []
+    total = len(testloader)
+    for index, data in enumerate(testloader):
+        inputs, label = data
+
+        pred        = classfication.detect_image(inputs)
+        pred_1      = np.argmax(pred)
+        correct_1   += pred_1 == label.item()
+        
+        pred_5      = np.argsort(pred)[::-1]
+        pred_5      = pred_5[:5]
+        correct_5   += label.item() in pred_5
+        
+        preds.append(pred_1)
+        labels.append(label.item())
+        if index % 100 == 0:
+            print("[%d/%d]"%(index, total))
+            
+    hist        = fast_hist(np.array(labels), np.array(preds), len(classfication.class_names))
+    Recall      = per_class_Recall(hist)
+    Precision   = per_class_Precision(hist)
+    
+    show_results(metrics_out_path, hist, Recall, Precision, classfication.class_names)
+    return correct_1 / total, correct_5 / total, Recall, Precision
+
 def fast_hist(a, b, n):
     k = (a >= 0) & (a < n)
     return np.bincount(n * a[k].astype(int) + b[k], minlength=n ** 2).reshape(n, n)  
