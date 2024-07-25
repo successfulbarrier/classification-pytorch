@@ -1,13 +1,5 @@
 from torch import nn
-# from torchvision.models.utils import load_state_dict_from_url
-from torchvision.models import mobilenet_v2
-
-__all__ = ['MobileNetV2', 'mobilenetv2']
-
-
-model_urls = {
-    'mobilenetv2': 'https://download.pytorch.org/models/mobilenet_v2-b0353104.pth',
-}
+import torchvision.models as models
 
 
 def _make_divisible(v, divisor, min_value=None):
@@ -134,10 +126,11 @@ class MobileNetV2(nn.Module):
 
 
 def mobilenetv2(pretrained=False, progress=True, num_classes=1000):
+    model = MobileNetV2()
     if pretrained:
-        model = mobilenet_v2(pretrained=pretrained, progress=progress)
-    else:
-        model = mobilenet_v2(pretrained=False, progress=progress)
+        # 获取预训练权重
+        weights = models.MobileNet_V2_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
     if num_classes!=1000:
         model.classifier = nn.Sequential(
                 nn.Dropout(0.2),

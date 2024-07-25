@@ -24,7 +24,7 @@ if __name__ == "__main__":
     #----------------------------------------------------#
     #   是否使用CIFAR数据集训练
     #----------------------------------------------------#
-    CIFAR = "CIFAR100"
+    CIFAR           = None
     #----------------------------------------------------#
     #   是否使用Cuda
     #   没有GPU可以设置成False
@@ -55,11 +55,11 @@ if __name__ == "__main__":
     #   训练自己的数据集的时候一定要注意修改classes_path
     #   修改成自己对应的种类的txt
     #----------------------------------------------------#
-    classes_path    = 'model_data/flowers.txt' 
+    classes_path    = 'model_data/light.txt' 
     #----------------------------------------------------#
     #   输入的图片大小
     #----------------------------------------------------#
-    input_shape     = [224, 224]
+    input_shape     = [224,224]
     #------------------------------------------------------#
     #   所用模型种类：
     #   mobilenetv2、
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     #   如果想要让模型从主干的预训练权值开始训练，则设置model_path = ''，pretrain = True，此时仅加载主干。
     #   如果想要让模型从0开始训练，则设置model_path = ''，pretrain = Fasle，此时从0开始训练。
     #----------------------------------------------------------------------------------------------------------------------------#
-    model_path      = "model_data/mobilenet_v2-b0353104.pth"
+    model_path      = ""
         
     #----------------------------------------------------------------------------------------------------------------------------#
     #   训练分为两个阶段，分别是冻结阶段和解冻阶段。设置冻结阶段是为了满足机器性能不足的同学的训练需求。
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     #   Freeze_Train    是否进行冻结训练
     #                   默认先冻结主干训练后解冻训练。
     #------------------------------------------------------------------#
-    Freeze_Train        = False
+    Freeze_Train        = True
     
     #------------------------------------------------------------------#
     #   其它训练参数：学习率、优化器、学习率下降有关
@@ -193,7 +193,7 @@ if __name__ == "__main__":
     #   test_annotation_path    验证图片路径和标签（使用测试集代替验证集）
     #------------------------------------------------------#
     train_annotation_path   = "cls_train.txt"
-    test_annotation_path    = 'cls_test.txt'
+    test_annotation_path    = "cls_val.txt"
 
     #------------------------------------------------------#
     #   设置用到的显卡
@@ -249,12 +249,9 @@ if __name__ == "__main__":
         class_names, num_classes = get_classes(classes_path)
 
     if backbone not in ['vit_b_16', 'swin_transformer_tiny', 'swin_transformer_small', 'swin_transformer_base']:
-        if backbone == "mobilenetv2":
-            model = get_model_from_name[backbone](num_classes = num_classes)
-        else:
-            model = get_model_from_name[backbone](num_classes = num_classes, pretrained = pretrained)
+        model = get_model_from_name[backbone](num_classes = num_classes, pretrained = pretrained)
     else:
-        model = get_model_from_name[backbone](input_shape = input_shape, num_classes = num_classes, pretrained = pretrained)
+        model = get_model_from_name[backbone](image_size = input_shape, num_classes = num_classes, pretrained = pretrained)
     
     if not pretrained:
         weights_init(model)
@@ -269,7 +266,7 @@ if __name__ == "__main__":
         #   根据预训练权重的Key和模型的Key进行加载
         #------------------------------------------------------#
         model_dict      = model.state_dict()
-        pretrained_dict = torch.load(model_path, map_location = device)
+        pretrained_dict = torch.load(model_path, map_location = torch.device('cpu'))
         load_key, no_load_key, temp_dict = [], [], {}
         for k, v in pretrained_dict.items():
             if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
@@ -279,6 +276,7 @@ if __name__ == "__main__":
                 no_load_key.append(k)
         model_dict.update(temp_dict)
         model.load_state_dict(model_dict)
+        model.to(device)
         #------------------------------------------------------#
         #   显示没有匹配上的Key
         #------------------------------------------------------#
@@ -413,9 +411,7 @@ if __name__ == "__main__":
         if epoch_step == 0 or epoch_step_val == 0:
             raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
 
-        train_dataset   = DataGenerator(train_lines, input_shape, True)
-        val_dataset     = DataGenerator(val_lines, input_shape, False)
-        
+
         if CIFAR == "CIFAR10":
             # 数据预处理
             transform = transforms.Compose([
@@ -445,6 +441,9 @@ if __name__ == "__main__":
             testset = torchvision.datasets.CIFAR100(root='/media/lht/LHT/code/datasets', train=False, download=True, transform=transform)
             gen_val = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
         else:
+            train_dataset   = DataGenerator(train_lines, input_shape, True)
+            val_dataset     = DataGenerator(val_lines, input_shape, False)
+        
             if distributed:
                 train_sampler   = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True,)
                 val_sampler     = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False,)

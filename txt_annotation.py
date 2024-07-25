@@ -9,13 +9,13 @@ from utils.utils import get_classes
 #                   txt文件中是自己所要去区分的种类
 #                   与训练和预测所用的classes_path一致即可
 #-------------------------------------------------------------------#
-classes_path    = 'model_data/flowers.txt'
+classes_path    = 'model_data/light.txt'
 #-------------------------------------------------------#
 #   datasets_path   指向数据集所在的路径
 #-------------------------------------------------------#
-datasets_path   = '/media/lht/LHT/code/datasets/flowers'
+datasets_path   = '/media/lht/LHT/code/datasets/light_Classification'
 
-sets            = ["train", "test"]
+sets            = ["train", "val"]
 classes, _      = get_classes(classes_path)
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ from utils.utils_metrics import evaluteTop1_5
 #------------------------------------------------------#
 #   test_annotation_path    测试图片路径和标签
 #------------------------------------------------------#
-test_annotation_path    = 'cls_test.txt'
+test_annotation_path    = 'cls_val.txt'
 #------------------------------------------------------#
 #   metrics_out_path        指标保存的文件夹
 #------------------------------------------------------#
@@ -50,7 +50,7 @@ if __name__ == "__main__":
             
     classfication = Eval_Classification()
     
-    with open("./cls_test.txt","r") as f:
+    with open("./cls_val.txt","r") as f:
         lines = f.readlines()
     top1, top5, Recall, Precision = evaluteTop1_5(classfication, lines, metrics_out_path)
     print("top-1 accuracy = %.2f%%" % (top1*100))

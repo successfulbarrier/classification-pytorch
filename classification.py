@@ -19,8 +19,8 @@ class Classification(object):
         #   model_path指向logs文件夹下的权值文件，classes_path指向model_data下的txt
         #   如果出现shape不匹配，同时要注意训练时的model_path和classes_path参数的修改
         #--------------------------------------------------------------------------#
-        "model_path"        : 'logs/loss_2024_07_19_16_49_06/best_epoch_weights.pth',
-        "classes_path"      : 'model_data/flowers.txt',
+        "model_path"        : 'logs/best_epoch_weights.pth',
+        "classes_path"      : 'model_data/light.txt',
         #--------------------------------------------------------------------#
         #   输入的图片大小
         #--------------------------------------------------------------------#
@@ -110,9 +110,9 @@ class Classification(object):
         self.model  = self.model.eval()
         print('{} model, and classes loaded.'.format(self.model_path))
 
-        if self.cuda:
-            self.model = nn.DataParallel(self.model)
-            self.model = self.model.cuda()
+        # if self.cuda:
+        #     self.model = nn.DataParallel(self.model)
+        #     self.model = self.model.cuda()
 
     #---------------------------------------------------#
     #   检测图片
@@ -154,3 +154,12 @@ class Classification(object):
         plt.title('Class:%s Probability:%.3f' %(class_name, probability))
         plt.show()
         return class_name
+
+    #---------------------------------------------------#
+    #   导出ONNX模型
+    #---------------------------------------------------#
+    def export_onnx(self, onnx_path):
+        self.model.eval()
+        dummy_input = torch.randn(1, 3, self.input_shape[0], self.input_shape[1])
+        torch.onnx.export(self.model, dummy_input, onnx_path)
+        print('ONNX model exported to {}'.format(onnx_path))

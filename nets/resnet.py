@@ -1,15 +1,6 @@
 import torch
 import torch.nn as nn
-# from torchvision.models.utils import load_state_dict_from_url
-from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
-
-model_urls = {
-    'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
-    'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
-    'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
-    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
-    'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
-}
+import torchvision.models as models
 
 
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):
@@ -228,54 +219,54 @@ class ResNet(nn.Module):
 def resnet18(pretrained=False, progress=True, num_classes=1000):
     model = ResNet(BasicBlock, [2, 2, 2, 2])
     if pretrained:
-        model = resnet18(pretrained=pretrained, progress=progress)
-    else:
-        model = resnet18(pretrained=False, progress=progress)
-
-    if num_classes!=1000:
+        # 获取预训练权重
+        weights = models.ResNet18_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
+    
+    if num_classes != 1000:
         model.fc = nn.Linear(512 * model.block.expansion, num_classes)
     return model
 
 def resnet34(pretrained=False, progress=True, num_classes=1000):
     model = ResNet(BasicBlock, [3, 4, 6, 3])
     if pretrained:
-        model = resnet34(pretrained=pretrained, progress=progress)
-    else:
-        model = resnet34(pretrained=False, progress=progress)
-
-    if num_classes!=1000:
+        # 获取预训练权重
+        weights = models.ResNet34_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
+    
+    if num_classes != 1000:
         model.fc = nn.Linear(512 * model.block.expansion, num_classes)
     return model
 
 def resnet50(pretrained=False, progress=True, num_classes=1000):
     model = ResNet(Bottleneck, [3, 4, 6, 3])
     if pretrained:
-        model = resnet50(pretrained=pretrained, progress=progress)
-    else:
-        model = resnet50(pretrained=False, progress=progress)
-
-    if num_classes!=1000:
+        # 获取预训练权重
+        weights = models.ResNet50_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
+    
+    if num_classes != 1000:
         model.fc = nn.Linear(512 * model.block.expansion, num_classes)
     return model
 
 def resnet101(pretrained=False, progress=True, num_classes=1000):
     model = ResNet(Bottleneck, [3, 4, 23, 3])
     if pretrained:
-        model = resnet101(pretrained=pretrained, progress=progress)
-    else:
-        model = resnet101(pretrained=False, progress=progress)
-
-    if num_classes!=1000:
+        # 获取预训练权重
+        weights = models.ResNet101_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
+    
+    if num_classes != 1000:
         model.fc = nn.Linear(512 * model.block.expansion, num_classes)
     return model
 
 def resnet152(pretrained=False, progress=True, num_classes=1000):
     model = ResNet(Bottleneck, [3, 8, 36, 3])
     if pretrained:
-        model = resnet152(pretrained=pretrained, progress=progress)
-    else:
-        model = resnet152(pretrained=False, progress=progress)
-
-    if num_classes!=1000:
+        # 获取预训练权重
+        weights = models.ResNet152_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
+    
+    if num_classes != 1000:
         model.fc = nn.Linear(512 * model.block.expansion, num_classes)
     return model

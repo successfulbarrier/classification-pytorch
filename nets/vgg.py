@@ -1,17 +1,6 @@
 import torch
 import torch.nn as nn
-# from torchvision.models.utils import load_state_dict_from_url
-from torchvision.models import vgg11, vgg11_bn, vgg13, vgg13_bn, vgg16, vgg16_bn
-
-model_urls = {
-    'vgg11': 'https://download.pytorch.org/models/vgg11-bbd30ac9.pth',
-    'vgg13': 'https://download.pytorch.org/models/vgg13-c768596a.pth',
-    'vgg16': 'https://download.pytorch.org/models/vgg16-397923af.pth',
-    'vgg11_bn': 'https://download.pytorch.org/models/vgg11_bn-6002323d.pth',
-    'vgg13_bn': 'https://download.pytorch.org/models/vgg13_bn-abd245e5.pth',
-    'vgg16_bn': 'https://download.pytorch.org/models/vgg16_bn-6c64b313.pth',
-}
-
+import torchvision.models as models
 
 class VGG(nn.Module):
     def __init__(self, features, num_classes=1000, init_weights=True):
@@ -85,9 +74,9 @@ cfgs = {
 def vgg11(pretrained=False, progress=True, num_classes=1000):
     model = VGG(make_layers(cfgs['A']))
     if pretrained:
-        model = vgg11(pretrained=pretrained, progress=progress)
-    else:
-        model = vgg11(pretrained=False, progress=progress)
+        # 获取预训练权重
+        weights = models.VGG11_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
 
     if num_classes!=1000:
         model.classifier =  nn.Sequential(
@@ -104,9 +93,9 @@ def vgg11(pretrained=False, progress=True, num_classes=1000):
 def vgg13(pretrained=False, progress=True, num_classes=1000):
     model = VGG(make_layers(cfgs['B']))
     if pretrained:
-        model = vgg13(pretrained=pretrained, progress=progress)
-    else:
-        model = vgg13(pretrained=False, progress=progress)
+        # 获取预训练权重
+        weights = models.VGG13_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
 
     if num_classes!=1000:
         model.classifier =  nn.Sequential(
@@ -123,9 +112,9 @@ def vgg13(pretrained=False, progress=True, num_classes=1000):
 def vgg16(pretrained=False, progress=True, num_classes=1000):
     model = VGG(make_layers(cfgs['D']))
     if pretrained:
-        model = vgg16(pretrained=pretrained, progress=progress)
-    else:
-        model = vgg16(pretrained=False, progress=progress)
+        # 获取预训练权重
+        weights = models.VGG16_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
 
     if num_classes!=1000:
         model.classifier =  nn.Sequential(
@@ -142,9 +131,9 @@ def vgg16(pretrained=False, progress=True, num_classes=1000):
 def vgg11_bn(pretrained=False, progress=True, num_classes=1000):
     model = VGG(make_layers(cfgs['A'], True))
     if pretrained:
-        model = vgg11_bn(pretrained=pretrained, progress=progress)
-    else:
-        model = vgg11_bn(pretrained=False, progress=progress)
+        # 获取预训练权重
+        weights = models.VGG11_BN_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
 
     if num_classes!=1000:
         model.classifier =  nn.Sequential(
@@ -161,9 +150,9 @@ def vgg11_bn(pretrained=False, progress=True, num_classes=1000):
 def vgg13_bn(pretrained=False, progress=True, num_classes=1000):
     model = VGG(make_layers(cfgs['B'], True))
     if pretrained:
-        model = vgg13_bn(pretrained=pretrained, progress=progress)
-    else:
-        model = vgg13_bn(pretrained=False, progress=progress)
+        # 获取预训练权重
+        weights = models.VGG13_BN_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
 
     if num_classes!=1000:
         model.classifier =  nn.Sequential(
@@ -180,9 +169,9 @@ def vgg13_bn(pretrained=False, progress=True, num_classes=1000):
 def vgg16_bn(pretrained=False, progress=True, num_classes=1000):
     model = VGG(make_layers(cfgs['D'], True))
     if pretrained:
-        model = vgg16_bn(pretrained=pretrained, progress=progress)
-    else:
-        model = vgg16_bn(pretrained=False, progress=progress)
+        # 获取预训练权重
+        weights = models.VGG16_BN_Weights.DEFAULT
+        model.load_state_dict(weights.get_state_dict(progress=progress))
 
     if num_classes!=1000:
         model.classifier =  nn.Sequential(
