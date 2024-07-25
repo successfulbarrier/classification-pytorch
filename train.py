@@ -24,7 +24,7 @@ if __name__ == "__main__":
     #----------------------------------------------------#
     #   是否使用CIFAR数据集训练
     #----------------------------------------------------#
-    CIFAR           = None
+    CIFAR           = "CIFAR100"
     #----------------------------------------------------#
     #   是否使用Cuda
     #   没有GPU可以设置成False
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     #----------------------------------------------------#
     #   输入的图片大小
     #----------------------------------------------------#
-    input_shape     = [224,224]
+    input_shape     = [32,32]
     #------------------------------------------------------#
     #   所用模型种类：
     #   mobilenetv2、
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     #   vit_b_16、
     #   swin_transformer_tiny、swin_transformer_small、swin_transformer_base
     #------------------------------------------------------#
-    backbone        = "mobilenetv2"
+    backbone        = "vit_b_16"
     #----------------------------------------------------------------------------------------------------------------------------#
     #   是否使用主干网络的预训练权重，此处使用的是主干的权重，因此是在模型构建的时候进行加载的。
     #   如果设置了model_path，则主干的权值无需加载，pretrained的值无意义。
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     pretrained      = True
     #----------------------------------------------------------------------------------------------------------------------------#
     #   权值文件的下载请看README，可以通过网盘下载。模型的 预训练权重 对不同数据集是通用的，因为特征是通用的。
-    #   模型的 预训练权重 比较重要的部分是 主干特征提取网络的权值部分，用于进行特征提取。
+    #   模型的 预训练权重 比较重要的部分是主干特征提取网络的权值部分，用于进行特征提取。
     #   预训练权重对于99%的情况都必须要用，不用的话主干部分的权值太过随机，特征提取效果不明显，网络训练的结果也不会好
     #
     #   如果训练过程中存在中断训练的操作，可以将model_path设置成logs文件夹下的权值文件，将已经训练了一部分的权值再次载入。
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     #------------------------------------------------------------------#
     Init_Epoch          = 0
     Freeze_Epoch        = 10
-    Freeze_batch_size   = 16
+    Freeze_batch_size   = 128
     #------------------------------------------------------------------#
     #   解冻阶段训练参数
     #   此时模型的主干不被冻结了，特征提取网络会发生改变
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     #------------------------------------------------------------------#
     UnFreeze_Epoch      = 50
-    Unfreeze_batch_size = 16
+    Unfreeze_batch_size = 128
     #------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
     #                   默认先冻结主干训练后解冻训练。
@@ -248,13 +248,23 @@ if __name__ == "__main__":
     else:
         class_names, num_classes = get_classes(classes_path)
 
+    #-------------------------------------------------#
+    #   选择模型
+    #-------------------------------------------------#
     if backbone not in ['vit_b_16', 'swin_transformer_tiny', 'swin_transformer_small', 'swin_transformer_base']:
         model = get_model_from_name[backbone](num_classes = num_classes, pretrained = pretrained)
     else:
-        model = get_model_from_name[backbone](image_size = input_shape, num_classes = num_classes, pretrained = pretrained)
+        model = get_model_from_name[backbone](input_shape = input_shape, num_classes = num_classes, pretrained = pretrained)
     
+    #-------------------------------------------------#
+    #   不使用预训练权重时初始化权重
+    #-------------------------------------------------#
     if not pretrained:
         weights_init(model)
+    
+    #-------------------------------------------------#
+    #   加载模型权重，可以加载完整权重
+    #-------------------------------------------------#
     if model_path != "":
         #------------------------------------------------------#
         #   权值文件请看README，百度网盘下载
@@ -411,7 +421,9 @@ if __name__ == "__main__":
         if epoch_step == 0 or epoch_step_val == 0:
             raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
 
-
+        #-------------------------------------------------#
+        #   加载数据集
+        #-------------------------------------------------#
         if CIFAR == "CIFAR10":
             # 数据预处理
             transform = transforms.Compose([
@@ -422,10 +434,10 @@ if __name__ == "__main__":
             ])
 
             # 加载 CIFAR-10 数据集
-            trainset = torchvision.datasets.CIFAR10(root='/media/lht/LHT/code/datasets', train=True, download=False, transform=transform)
-            gen = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
-            testset = torchvision.datasets.CIFAR10(root='/media/lht/LHT/code/datasets', train=False, download=False, transform=transform)
-            gen_val = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
+            train_dataset   = torchvision.datasets.CIFAR10(root='/media/lht/LHT/code/datasets', train=False, download=False, transform=transform)
+            val_dataset     = torchvision.datasets.CIFAR10(root='/media/lht/LHT/code/datasets', train=False, download=False, transform=transform)
+            gen             = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)            
+            gen_val         = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
         elif CIFAR == "CIFAR100":
             # 数据预处理
             transform = transforms.Compose([
@@ -436,10 +448,10 @@ if __name__ == "__main__":
             ])
 
             # 加载 CIFAR-100 数据集
-            trainset = torchvision.datasets.CIFAR100(root='/media/lht/LHT/code/datasets', train=True, download=True, transform=transform)
-            gen = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
-            testset = torchvision.datasets.CIFAR100(root='/media/lht/LHT/code/datasets', train=False, download=True, transform=transform)
-            gen_val = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
+            train_dataset   = torchvision.datasets.CIFAR100(root='/media/lht/LHT/code/datasets', train=False, download=True, transform=transform)
+            val_dataset     = torchvision.datasets.CIFAR100(root='/media/lht/LHT/code/datasets', train=False, download=True, transform=transform)
+            gen             = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+            gen_val         = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
         else:
             train_dataset   = DataGenerator(train_lines, input_shape, True)
             val_dataset     = DataGenerator(val_lines, input_shape, False)
@@ -453,7 +465,7 @@ if __name__ == "__main__":
                 train_sampler   = None
                 val_sampler     = None
                 shuffle         = True
-                
+                    
             gen             = DataLoader(train_dataset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers, pin_memory=True, 
                                     drop_last=True, collate_fn=detection_collate, sampler=train_sampler)
             gen_val         = DataLoader(val_dataset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
@@ -498,10 +510,14 @@ if __name__ == "__main__":
                 if distributed:
                     batch_size = batch_size // ngpus_per_node
 
-                gen             = DataLoader(train_dataset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
-                                        drop_last=True, collate_fn=detection_collate, sampler=train_sampler)
-                gen_val         = DataLoader(val_dataset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
-                                        drop_last=True, collate_fn=detection_collate, sampler=val_sampler)
+                if CIFAR == "CIFAR10" or CIFAR == "CIFAR100":
+                    gen         = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+                    gen_val     = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+                else:
+                    gen         = DataLoader(train_dataset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
+                                            drop_last=True, collate_fn=detection_collate, sampler=train_sampler)
+                    gen_val     = DataLoader(val_dataset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
+                                            drop_last=True, collate_fn=detection_collate, sampler=val_sampler)
 
                 UnFreeze_flag = True
 
