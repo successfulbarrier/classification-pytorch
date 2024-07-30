@@ -68,14 +68,14 @@ if __name__ == "__main__":
     #   vit_b_16、
     #   swin_transformer_tiny、swin_transformer_small、swin_transformer_base
     #------------------------------------------------------#
-    backbone        = "vit_b_16"
+    backbone        = "resnet18"
     #----------------------------------------------------------------------------------------------------------------------------#
     #   是否使用主干网络的预训练权重，此处使用的是主干的权重，因此是在模型构建的时候进行加载的。
     #   如果设置了model_path，则主干的权值无需加载，pretrained的值无意义。
     #   如果不设置model_path，pretrained = True，此时仅加载主干开始训练。
     #   如果不设置model_path，pretrained = False，Freeze_Train = Fasle，此时从0开始训练，且没有冻结主干的过程。
     #----------------------------------------------------------------------------------------------------------------------------#
-    pretrained      = True
+    pretrained      = False
     #----------------------------------------------------------------------------------------------------------------------------#
     #   权值文件的下载请看README，可以通过网盘下载。模型的 预训练权重 对不同数据集是通用的，因为特征是通用的。
     #   模型的 预训练权重 比较重要的部分是主干特征提取网络的权值部分，用于进行特征提取。
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     #   如果想要让模型从主干的预训练权值开始训练，则设置model_path = ''，pretrain = True，此时仅加载主干。
     #   如果想要让模型从0开始训练，则设置model_path = ''，pretrain = Fasle，此时从0开始训练。
     #----------------------------------------------------------------------------------------------------------------------------#
-    model_path      = ""
+    model_path      = "model_data/resnet18-5c106cde.pth"
         
     #----------------------------------------------------------------------------------------------------------------------------#
     #   训练分为两个阶段，分别是冻结阶段和解冻阶段。设置冻结阶段是为了满足机器性能不足的同学的训练需求。
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     UnFreeze_Epoch      = 50
     Unfreeze_batch_size = 128
     #------------------------------------------------------------------#
-    #   Freeze_Train    是否进行冻结训练
+    #   Freeze_Train    是否进行冻结训练。
     #                   默认先冻结主干训练后解冻训练。
     #------------------------------------------------------------------#
     Freeze_Train        = True
@@ -448,8 +448,8 @@ if __name__ == "__main__":
             ])
 
             # 加载 CIFAR-100 数据集
-            train_dataset   = torchvision.datasets.CIFAR100(root='/media/lht/LHT/code/datasets', train=False, download=True, transform=transform)
-            val_dataset     = torchvision.datasets.CIFAR100(root='/media/lht/LHT/code/datasets', train=False, download=True, transform=transform)
+            train_dataset   = torchvision.datasets.CIFAR100(root='/media/lht/LHT/code/datasets', train=True, download=False, transform=transform)
+            val_dataset     = torchvision.datasets.CIFAR100(root='/media/lht/LHT/code/datasets', train=False, download=False, transform=transform)
             gen             = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
             gen_val         = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
         else:

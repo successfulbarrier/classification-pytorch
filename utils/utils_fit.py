@@ -15,14 +15,12 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_step
 
     val_loss        = 0
     val_accuracy    = 0
-
+    epoch_step = len(gen)
     if local_rank == 0:
         print('Start Train')
         pbar = tqdm(total=epoch_step,desc=f'Epoch {epoch + 1}/{Epoch}',postfix=dict,mininterval=0.3)
     model_train.train()
     for iteration, batch in enumerate(gen):
-        if iteration >= epoch_step: 
-            break
         images, targets = batch
         with torch.no_grad():
             if cuda:
@@ -77,11 +75,10 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_step
         pbar.close()
         print('Finish Train')
         print('Start Validation')
+        epoch_step_val = len(gen_val)
         pbar = tqdm(total=epoch_step_val, desc=f'Epoch {epoch + 1}/{Epoch}',postfix=dict,mininterval=0.3)
     model_train.eval()
     for iteration, batch in enumerate(gen_val):
-        if iteration >= epoch_step_val:
-            break
         images, targets = batch
         with torch.no_grad():
             if cuda:
