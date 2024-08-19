@@ -3,7 +3,7 @@ from .resnet import resnet18, resnet34, resnet50, resnet101, resnet152
 from .vgg import vgg11, vgg13, vgg16, vgg11_bn, vgg13_bn, vgg16_bn
 from .vision_transformer import vit_b_16
 from .swin_transformer import swin_transformer_base, swin_transformer_small, swin_transformer_tiny
-
+from .models_mamba import vim_tiny_patch16_224_bimambav2_final_pool_mean_abs_pos_embed_with_midclstok_div2
 
 get_model_from_name = {
     "mobilenetv2"               : mobilenetv2,
@@ -21,5 +21,6 @@ get_model_from_name = {
     "vit_b_16"                  : vit_b_16,
     "swin_transformer_tiny"     : swin_transformer_tiny,
     "swin_transformer_small"    : swin_transformer_small,
-    "swin_transformer_base"     : swin_transformer_base
+    "swin_transformer_base"     : swin_transformer_base,
+    "vim_tiny_patch16_224"      : vim_tiny_patch16_224_bimambav2_final_pool_mean_abs_pos_embed_with_midclstok_div2
 }

@@ -10,7 +10,7 @@ from nets import get_model_from_name
 if __name__ == "__main__":
     input_shape = [224, 224]
     num_classes = 1000
-    backbone    = "mobilenetv2"
+    backbone    = "swin_transformer_tiny"
     
     device  = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model   = get_model_from_name[backbone](num_classes=num_classes, pretrained=False).to(device)
